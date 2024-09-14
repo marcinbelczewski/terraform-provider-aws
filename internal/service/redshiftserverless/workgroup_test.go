@@ -373,12 +373,6 @@ resource "aws_redshiftserverless_workgroup" "test" {
   namespace_name = aws_redshiftserverless_namespace.test.namespace_name
   workgroup_name = %[1]q
 }
-
-# Presence of this output reproduces bug #39273
-output "db_name" {
-  value = aws_redshiftserverless_namespace.test.db_name
-}
-
 `, rName)
 }
 
