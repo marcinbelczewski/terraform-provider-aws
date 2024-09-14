@@ -6,6 +6,10 @@ package redshiftserverless_test
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"testing"
 
 	"github.com/YakDriver/regexache"
@@ -104,17 +108,6 @@ func TestAccRedshiftServerlessNamespace_user(t *testing.T) {
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 		CheckDestroy:             testAccCheckNamespaceDestroy(ctx),
 		Steps: []resource.TestStep{
-			{
-				Config: testAccNamespaceConfig_basic(rName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckNamespaceExists(ctx, resourceName),
-				),
-			},
-			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
 			{
 				Config: testAccNamespaceConfig_user(rName),
 				Check: resource.ComposeTestCheckFunc(
@@ -237,6 +230,35 @@ func TestAccRedshiftServerlessNamespace_manageAdminPassword(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "manage_admin_password", acctest.CtTrue),
 					resource.TestCheckResourceAttrSet(resourceName, "admin_password_secret_arn"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccRedshiftServerlessNamespace_kmsKeyRemoved(t *testing.T) {
+	ctx := acctest.Context(t)
+	resourceName := "aws_redshiftserverless_namespace.test"
+	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
+		ErrorCheck:               acctest.ErrorCheck(t, names.RedshiftServerlessServiceID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckNamespaceDestroy(ctx),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNamespaceConfig_withKmsKey(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(resourceName, tfjsonpath.New(names.AttrARN), knownvalue.NotNull()),
+				},
+			},
+			{
+				Config: testAccNamespaceConfig_basic(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(resourceName, plancheck.ResourceActionReplace),
+					},
+				},
 			},
 		},
 	})
@@ -410,4 +432,15 @@ resource "aws_redshiftserverless_workgroup" "test" {
   workgroup_name = %[1]q
 }
 `, rName))
+}
+
+func testAccNamespaceConfig_withKmsKey(rName string) string {
+	return fmt.Sprintf(`
+resource "aws_kms_key" "test" {}
+
+resource "aws_redshiftserverless_namespace" "test" {
+  namespace_name        = %[1]q
+  kms_key_id = aws_kms_key.test.arn
+}
+`, rName)
 }
