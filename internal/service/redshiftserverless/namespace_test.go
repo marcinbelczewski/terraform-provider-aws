@@ -58,7 +58,7 @@ func TestAccRedshiftServerlessNamespace_basic(t *testing.T) {
 					acctest.MatchResourceAttrRegionalARN(resourceName, names.AttrARN, "redshift-serverless", regexache.MustCompile("namespace/.+$")),
 					resource.TestCheckResourceAttr(resourceName, "namespace_name", rName),
 					resource.TestCheckResourceAttrSet(resourceName, "namespace_id"),
-					resource.TestCheckResourceAttr(resourceName, "log_exports.#", acctest.Ct0),
+					resource.TestCheckResourceAttr(resourceName, "log_exports.#", acctest.Ct1),
 					resource.TestCheckResourceAttr(resourceName, "iam_roles.#", acctest.Ct2),
 					resource.TestCheckTypeSetElemAttrPair(resourceName, "iam_roles.*", "aws_iam_role.test.0", names.AttrARN),
 					resource.TestCheckTypeSetElemAttrPair(resourceName, "iam_roles.*", "aws_iam_role.test.1", names.AttrARN),
@@ -371,6 +371,7 @@ func testAccNamespaceConfig_updated(rName string) string {
 resource "aws_redshiftserverless_namespace" "test" {
   namespace_name = %[1]q
   iam_roles      = aws_iam_role.test[*].arn
+  log_exports = ["userlog"]
 }
 `, rName))
 }
