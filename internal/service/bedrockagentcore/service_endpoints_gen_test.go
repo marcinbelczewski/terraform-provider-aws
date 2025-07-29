@@ -284,8 +284,8 @@ func callService(ctx context.Context, t *testing.T, meta *conns.AWSClient) apiCa
 
 	var result apiCallParams
 
-	input := bedrockagentcorecontrol.ListAgentsRuntimesInput{}
-	_, err := client.ListAgentsRuntimes(ctx, &input,
+	input := bedrockagentcorecontrol.ListAgentRuntimesInput{}
+	_, err := client.ListAgentRuntimes(ctx, &input,
 		func(opts *bedrockagentcorecontrol.Options) {
 			opts.APIOptions = append(opts.APIOptions,
 				addRetrieveEndpointURLMiddleware(t, &result.endpoint),

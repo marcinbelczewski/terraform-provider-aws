@@ -896,7 +896,7 @@ service "bedrockagentcore" {
   }
 
   endpoint_info {
-    endpoint_api_call = "ListAgentsRuntimes"
+    endpoint_api_call = "ListAgentRuntimes"
   }
 
   resource_prefix {
